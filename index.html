@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JDC Jr Challenge</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --accent: #ff9800;
+            --accent-hover: #e68a00;
+            --text: #ffffff;
+            --text-dim: #aaaaaa;
+            --success: #4caf50;
+            --danger: #f44336;
+            --border: #333333;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background: var(--card-bg);
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+        }
+
+        h1, h2, h3 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: var(--accent);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Form Controls */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        input[type="text"], select {
+            width: 100%;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: #2a2a2a;
+            color: var(--text);
+            font-size: 16px;
+        }
+
+        .player-input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        button {
+            cursor: pointer;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 16px;
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: #000;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+        }
+
+        .btn-secondary {
+            background: #333;
+            color: var(--text);
+        }
+
+        .btn-secondary:hover {
+            background: #444;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-action {
+            background: var(--success);
+            color: white;
+            width: 100%;
+            margin-top: 15px;
+        }
+
+        /* Game Screen */
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .current-player {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--accent);
+        }
+
+        .round-info {
+            font-size: 1rem;
+            color: var(--text-dim);
+        }
+
+        .dart-tracker {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .dart-slot {
+            width: 60px;
+            height: 60px;
+            border: 2px dashed var(--border);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            background: #141414;
+        }
+
+        .dart-slot.filled {
+            border-style: solid;
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        /* Controls Layout */
+        .modifiers {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            justify-content: center;
+        }
+
+        .btn-mod {
+            flex: 1;
+            background: #2a2a2a;
+            color: var(--text);
+            border: 2px solid transparent;
+        }
+
+        .btn-mod.active {
+            border-color: var(--accent);
+            background: #3a3a3a;
+            color: var(--accent);
+        }
+
+        .keypad {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .btn-num {
+            background: #2a2a2a;
+            color: var(--text);
+            padding: 15px 5px;
+            font-size: 1.1rem;
+        }
+
+        .btn-num:hover {
+            background: #383838;
+        }
+
+        /* Special Game Pads */
+        .custom-pad {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .btn-color-black { background: #000; color: #fff; border: 1px solid #444; }
+        .btn-color-white { background: #fff; color: #000; }
+        .btn-color-green { background: #2e7d32; color: #fff; }
+        .btn-color-red { background: #c62828; color: #fff; }
+
+        .game-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        /* Scoreboard Table */
+        .table-responsive {
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: center;
+        }
+
+        th, td {
+            padding: 12px;
+            border: 1px solid var(--border);
+        }
+
+        th {
+            background: #2a2a2a;
+            color: var(--accent);
+        }
+
+        tr:nth-child(even) {
+            background: #181818;
+        }
+
+        .total-row {
+            font-weight: bold;
+            background: #2a2a2a !important;
+            color: var(--accent);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- SETUP SCREEN -->
+    <div id="setup-screen">
+        <h1>JDC Jr Challenge</h1>
+        <div class="form-group">
+            <label for="board-type">Select Board Type</label>
+            <select id="board-type">
+                <option value="basic">Basic Board</option>
+                <option value="quad">Quad Board</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Players</label>
+            <div id="player-inputs">
+                <div class="player-input-group">
+                    <input type="text" class="player-name-input" placeholder="Player 1 Name" value="Player 1">
+                </div>
+            </div>
+            <button type="button" class="btn-secondary" id="btn-add-player" style="width: 100%; margin-top: 5px;">+ Add Player</button>
+        </div>
+
+        <button class="btn-primary" id="btn-start-game">Start Challenge</button>
+    </div>
+
+    <!-- GAMEPLAY SCREEN -->
+    <div id="game-screen" class="hidden">
+        <h2 id="game-title">Game Title</h2>
+        <p id="game-instructions" style="text-align: center; color: var(--text-dim); margin-bottom: 15px; font-size: 0.9rem;"></p>
+
+        <div class="status-bar">
+            <div>
+                <div class="round-info" id="game-progress">Game 1 of 3</div>
+                <div class="current-player" id="display-player-name">Player Name</div>
+            </div>
+            <div style="text-align: right;">
+                <div class="round-info" id="display-round-info">Round 1/3</div>
+                <div class="round-info" id="display-player-score">Score: 0</div>
+            </div>
+        </div>
+
+        <div class="dart-tracker">
+            <div class="dart-slot" id="dart-1">-</div>
+            <div class="dart-slot" id="dart-2">-</div>
+            <div class="dart-slot" id="dart-3">-</div>
+        </div>
+
+        <!-- Dynamic Input Controls -->
+        <div id="input-container"></div>
+
+        <div class="game-controls">
+            <button class="btn-secondary" id="btn-undo" style="flex: 1;">Undo Dart</button>
+            <button class="btn-action" id="btn-submit-turn" style="flex: 2; margin-top: 0;">Submit Turn</button>
+        </div>
+
+        <!-- In-game Scoreboard Preview -->
+        <div class="table-responsive">
+            <h3>Current Standings</h3>
+            <table id="mini-scoreboard">
+                <!-- Dynamically Populated -->
+            </table>
+        </div>
+    </div>
+
+    <!-- FINAL RESULTS SCREEN -->
+    <div id="results-screen" class="hidden">
+        <h1>Challenge Complete!</h1>
+        <div class="table-responsive">
+            <table id="final-scoreboard">
+                <!-- Dynamically Populated -->
+            </table>
+        </div>
+        <button class="btn-primary" id="btn-restart" style="margin-top: 20px;">Play Again</button>
+    </div>
+</div>
+
+<script>
+    // State Management
+    const STATE = {
+        boardType: 'basic', // 'basic' | 'quad'
+        players: [], // [{ name: '', scores: { coloring: 0, bully: 0, raceDarts: 0 } }]
+        currentGameIndex: 0, // 0: Coloring, 1: Bully, 2: Race to 180
+        currentPlayerIndex: 0,
+        currentRound: 1, // 1-3 for Coloring/Bully, unbounded for Race
+        
+        // Turn state
+        currentTurnDarts: [], // Max 3 per turn. Items: { text: '', value: number, color?: string }
+        activeModifier: 1, // For Race to 180 (1, 2, 3, 4)
+        
+        // Game Specifics
+        coloringPlayerState: [], // Tracks unique colors hit in a round per player
+        racePlayerTotals: [] // Tracks current total score in Race to 180
+    };
+
+    const GAMES = [
+        { name: "1. Coloring Book", maxRounds: 3 },
+        { name: "2. A Bit of Bully", maxRounds: 3 },
+        { name: "3. Race to 180", maxRounds: null }
+    ];
+
+    // DOM Elements
+    const setupScreen = document.getElementById('setup-screen');
+    const gameScreen = document.getElementById('game-screen');
+    const resultsScreen = document.getElementById('results-screen');
+    const playerInputs = document.getElementById('player-inputs');
+    const inputContainer = document.getElementById('input-container');
+
+    // Setup Event Listeners
+    document.getElementById('btn-add-player').addEventListener('click', () => {
+        const count = playerInputs.children.length + 1;
+        const div = document.createElement('div');
+        div.className = 'player-input-group';
+        div.innerHTML = `
+            <input type="text" class="player-name-input" placeholder="Player ${count} Name" value="Player ${count}">
+            <button type="button" class="btn-danger" onclick="this.parentElement.remove()">X</button>
+        `;
+        playerInputs.appendChild(div);
+    });
+
+    document.getElementById('btn-start-game').addEventListener('click', startGame);
+    document.getElementById('btn-undo').addEventListener('click', undoDart);
+    document.getElementById('btn-submit-turn').addEventListener('click', submitTurn);
+    document.getElementById('btn-restart').addEventListener('click', () => location.reload());
+
+    function startGame() {
+        const nameInputs = document.querySelectorAll('.player-name-input');
+        const names = Array.from(nameInputs).map(i => i.value.trim()).filter(n => n !== "");
+        
+        if (names.length === 0) {
+            alert("Please enter at least one player name.");
+            return;
+        }
+
+        STATE.boardType = document.getElementById('board-type').value;
+        STATE.players = names.map(name => ({
+            name,
+            scores: { coloring: 0, bully: 0, raceDarts: 0 }
+        }));
+        
+        STATE.currentGameIndex = 0;
+        STATE.currentPlayerIndex = 0;
+        STATE.currentRound = 1;
+        
+        STATE.coloringPlayerState = STATE.players.map(() => new Set());
+        STATE.racePlayerTotals = STATE.players.map(() => 0);
+
+        setupScreen.classList.add('hidden');
+        gameScreen.classList.remove('hidden');
+
+        initCurrentGame();
+    }
+
+    function initCurrentGame() {
+        STATE.currentRound = 1;
+        STATE.currentPlayerIndex = 0;
+        STATE.currentTurnDarts = [];
+        STATE.activeModifier = 1;
+
+        if (STATE.currentGameIndex === 0) {
+            STATE.coloringPlayerState = STATE.players.map(() => new Set());
+        }
+
+        updateUI();
+        renderControls();
+    }
+
+    function updateUI() {
+        const game = GAMES[STATE.currentGameIndex];
+        const player = STATE.players[STATE.currentPlayerIndex];
+
+        document.getElementById('game-title').innerText = game.name;
+        document.getElementById('game-progress').innerText = `Game ${STATE.currentGameIndex + 1} of 3 (${STATE.boardType.toUpperCase()} Board)`;
+        document.getElementById('display-player-name').innerText = player.name;
+        
+        if (game.maxRounds) {
+            document.getElementById('display-round-info').innerText = `Round ${STATE.currentRound}/${game.maxRounds}`;
+        } else {
+            document.getElementById('display-round-info').innerText = `Round ${STATE.currentRound}`;
+        }
+
+        // Display Score/Progress
+        if (STATE.currentGameIndex === 0) {
+            document.getElementById('game-instructions').innerText = "Hit 3 different colors in a round to DOUBLE your turn points!";
+            document.getElementById('display-player-score').innerText = `Total: ${player.scores.coloring}`;
+        } else if (STATE.currentGameIndex === 1) {
+            document.getElementById('game-instructions').innerText = "Aim for the middle! The closer you are, the higher the points.";
+            document.getElementById('display-player-score').innerText = `Total: ${player.scores.bully}`;
+        } else {
+            document.getElementById('game-instructions').innerText = "Reach 180 points in as few darts as possible!";
+            const currentPts = STATE.racePlayerTotals[STATE.currentPlayerIndex];
+            const dartsUsed = player.scores.raceDarts;
+            document.getElementById('display-player-score').innerText = `Pts: ${currentPts}/180 | Darts: ${dartsUsed}`;
+        }
+
+        // Update Dart Slots
+        for (let i = 0; i < 3; i++) {
+            const slot = document.getElementById(`dart-${i + 1}`);
+            if (i < STATE.currentTurnDarts.length) {
+                slot.innerText = STATE.currentTurnDarts[i].text;
+                slot.classList.add('filled');
+            } else {
+                slot.innerText = '-';
+                slot.classList.remove('filled');
+            }
+        }
+
+        renderMiniScoreboard();
+    }
+
+    function renderControls() {
+        inputContainer.innerHTML = '';
+
+        if (STATE.currentGameIndex === 0) {
+            // COLORING BOOK
+            const pad = document.createElement('div');
+            pad.className = 'custom-pad';
+            
+            const buttons = [
+                { label: 'Miss', val: 0, color: 'miss', class: 'btn-secondary' },
+                { label: 'Black', val: 1, color: 'black', class: 'btn-color-black' },
+                { label: 'White', val: 1, color: 'white', class: 'btn-color-white' },
+                { label: 'Green', val: 2, color: 'green', class: 'btn-color-green' },
+                { label: 'Red', val: 2, color: 'red', class: 'btn-color-red' }
+            ];
+
+            buttons.forEach(b => {
+                const btn = document.createElement('button');
+                btn.className = b.class;
+                btn.innerText = `${b.label} (${b.val}pt)`;
+                btn.onclick = () => addDart({ text: b.label, value: b.val, color: b.color });
+                pad.appendChild(btn);
+            });
+            inputContainer.appendChild(pad);
+
+        } else if (STATE.currentGameIndex === 1) {
+            // A BIT OF BULLY
+            const pad = document.createElement('div');
+            pad.className = 'custom-pad';
+
+            let buttons = [];
+            if (STATE.boardType === 'basic') {
+                buttons = [
+                    { label: 'Miss', val: 0 },
+                    { label: 'Double', val: 1 },
+                    { label: 'Outer', val: 2 },
+                    { label: 'Triple', val: 3 },
+                    { label: 'Inner', val: 4 },
+                    { label: 'Bull', val: 6 },
+                    { label: 'DBull', val: 10 }
+                ];
+            } else {
+                buttons = [
+                    { label: 'Miss', val: 0 },
+                    { label: 'Double', val: 1 },
+                    { label: 'Outer', val: 2 },
+                    { label: 'Triple', val: 3 },
+                    { label: 'Middle', val: 4 },
+                    { label: 'Quad', val: 5 },
+                    { label: 'Inner', val: 6 },
+                    { label: 'Bull', val: 10 },
+                    { label: 'DBull', val: 15 }
+                ];
+            }
+
+            buttons.forEach(b => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-secondary';
+                btn.innerText = `${b.label} (${b.val}pt)`;
+                btn.onclick = () => addDart({ text: b.label, value: b.val });
+                pad.appendChild(btn);
+            });
+            inputContainer.appendChild(pad);
+
+        } else if (STATE.currentGameIndex === 2) {
+            // RACE TO 180
+            // Modifiers
+            const modsDiv = document.createElement('div');
+            modsDiv.className = 'modifiers';
+
+            const mods = [
+                { label: 'Single', val: 1 },
+                { label: 'Double', val: 2 },
+                { label: 'Triple', val: 3 }
+            ];
+            if (STATE.boardType === 'quad') {
+                mods.push({ label: 'Quad', val: 4 });
+            }
+
+            mods.forEach(m => {
+                const btn = document.createElement('button');
+                btn.className = `btn-mod ${STATE.activeModifier === m.val ? 'active' : ''}`;
+                btn.innerText = m.label;
+                btn.onclick = () => {
+                    STATE.activeModifier = m.val;
+                    renderControls();
+                };
+                modsDiv.appendChild(btn);
+            });
+            inputContainer.appendChild(modsDiv);
+
+            // Number Keypad
+            const keypad = document.createElement('div');
+            keypad.className = 'keypad';
+
+            for (let i = 1; i <= 20; i++) {
+                const btn = document.createElement('button');
+                btn.className = 'btn-num';
+                btn.innerText = i;
+                btn.onclick = () => handleRaceInput(i);
+                keypad.appendChild(btn);
+            }
+
+            // Bull and Miss
+            const bullBtn = document.createElement('button');
+            bullBtn.className = 'btn-num';
+            bullBtn.innerText = 'Bull (25)';
+            bullBtn.onclick = () => handleRaceInput(25);
+            keypad.appendChild(bullBtn);
+
+            const missBtn = document.createElement('button');
+            missBtn.className = 'btn-num';
+            missBtn.innerText = 'Miss';
+            missBtn.onclick = () => addDart({ text: 'Miss', value: 0 });
+            keypad.appendChild(missBtn);
+
+            inputContainer.appendChild(keypad);
+        }
+    }
+
+    function handleRaceInput(num) {
+        let modName = "";
+        let modVal = STATE.activeModifier;
+
+        // Bull handling logic: Usually Bull is 25, DBull is 50. Modifiers apply directly to num.
+        if (modVal === 1) modName = "";
+        else if (modVal === 2) modName = "D";
+        else if (modVal === 3) modName = "T";
+        else if (modVal === 4) modName = "Q";
+
+        const text = `${modName}${num}`;
+        const score = num * modVal;
+
+        addDart({ text, value: score });
+        
+        // Reset modifier back to single after hit
+        STATE.activeModifier = 1;
+        renderControls();
+    }
+
+    function addDart(dartObj) {
+        if (STATE.currentTurnDarts.length >= 3) {
+            alert("Turn full! Press 'Submit Turn' or 'Undo Dart'.");
+            return;
+        }
+
+        // Special handling for Race to 180 to stop adding if 180 reached mid-turn
+        if (STATE.currentGameIndex === 2) {
+            const currentPts = STATE.racePlayerTotals[STATE.currentPlayerIndex];
+            const turnPtsSoFar = STATE.currentTurnDarts.reduce((a, b) => a + b.value, 0);
+            if (currentPts + turnPtsSoFar >= 180) {
+                alert("Player already reached 180! Submit turn to finish.");
+                return;
+            }
+        }
+
+        STATE.currentTurnDarts.push(dartObj);
+        updateUI();
+    }
+
+    function undoDart() {
+        if (STATE.currentTurnDarts.length > 0) {
+            STATE.currentTurnDarts.pop();
+            updateUI();
+        }
+    }
+
+    function submitTurn() {
+        if (STATE.currentTurnDarts.length < 3) {
+            // Check if player reached 180 early in Race to 180
+            if (STATE.currentGameIndex === 2) {
+                const currentPts = STATE.racePlayerTotals[STATE.currentPlayerIndex];
+                const turnPts = STATE.currentTurnDarts.reduce((a, b) => a + b.value, 0);
+                if (currentPts + turnPts < 180 && STATE.currentTurnDarts.length < 3) {
+                    if (!confirm("Throw all 3 darts before submitting! Advance anyway?")) return;
+                }
+            } else {
+                if (!confirm("You have thrown fewer than 3 darts. Submit turn anyway?")) return;
+            }
+        }
+
+        const player = STATE.players[STATE.currentPlayerIndex];
+
+        // Process Game Specific Scoring
+        if (STATE.currentGameIndex === 0) {
+            // Coloring Book
+            let turnScore = 0;
+            let roundColors = new Set();
+
+            STATE.currentTurnDarts.forEach(d => {
+                turnScore += d.value;
+                if (d.color && d.color !== 'miss') {
+                    roundColors.add(d.color);
+                }
+            });
+
+            // Double points if 3 distinct colors hit in turn
+            if (roundColors.size >= 3) {
+                turnScore *= 2;
+            }
+
+            player.scores.coloring += turnScore;
+
+        } else if (STATE.currentGameIndex === 1) {
+            // A Bit of Bully
+            let turnScore = STATE.currentTurnDarts.reduce((a, b) => a + b.value, 0);
+            player.scores.bully += turnScore;
+
+        } else if (STATE.currentGameIndex === 2) {
+            // Race to 180
+            let dartsThrown = STATE.currentTurnDarts.length;
+            let turnScore = 0;
+
+            for (let d of STATE.currentTurnDarts) {
+                turnScore += d.value;
+            }
+
+            STATE.racePlayerTotals[STATE.currentPlayerIndex] += turnScore;
+            player.scores.raceDarts += dartsThrown;
+        }
+
+        // Reset turn state
+        STATE.currentTurnDarts = [];
+
+        // Advance to next player/round/game
+        advanceTurn();
+    }
+
+    function advanceTurn() {
+        const numPlayers = STATE.players.length;
+
+        // Check if game is Race to 180 and if someone reached 180
+        if (STATE.currentGameIndex === 2) {
+            // Check if current player reached 180
+            if (STATE.racePlayerTotals[STATE.currentPlayerIndex] >= 180) {
+                // Check if all players have completed the round so everyone gets equal turns, 
+                // OR end immediately if everyone reached 180.
+            }
+        }
+
+        STATE.currentPlayerIndex++;
+
+        if (STATE.currentPlayerIndex >= numPlayers) {
+            // End of a full round for all players
+            STATE.currentPlayerIndex = 0;
+            STATE.currentRound++;
+
+            // Check Game End Conditions
+            if (STATE.currentGameIndex < 2) {
+                // Round based games (3 rounds)
+                if (STATE.currentRound > GAMES[STATE.currentGameIndex].maxRounds) {
+                    nextGame();
+                    return;
+                }
+            } else {
+                // Race to 180 logic: Check if all players reached >= 180
+                const allFinished = STATE.racePlayerTotals.every(pts => pts >= 180);
+                if (allFinished) {
+                    endChallenge();
+                    return;
+                }
+            }
+        }
+
+        // Skip players in Race to 180 who already finished
+        if (STATE.currentGameIndex === 2 && STATE.racePlayerTotals[STATE.currentPlayerIndex] >= 180) {
+            // Check if all finished
+            if (STATE.racePlayerTotals.every(pts => pts >= 180)) {
+                endChallenge();
+                return;
+            } else {
+                // Recursively move to next player
+                advanceTurn();
+                return;
+            }
+        }
+
+        updateUI();
+        renderControls();
+    }
+
+    function nextGame() {
+        STATE.currentGameIndex++;
+        if (STATE.currentGameIndex >= GAMES.length) {
+            endChallenge();
+        } else {
+            alert(`Game Complete! Starting ${GAMES[STATE.currentGameIndex].name}`);
+            initCurrentGame();
+        }
+    }
+
+    function endChallenge() {
+        gameScreen.classList.add('hidden');
+        resultsScreen.classList.remove('hidden');
+
+        renderFinalScoreboard();
+    }
+
+    function renderMiniScoreboard() {
+        const table = document.getElementById('mini-scoreboard');
+        let html = `<tr><th>Player</th>`;
+        if (STATE.currentGameIndex === 0) html += `<th>Coloring Book Pts</th>`;
+        if (STATE.currentGameIndex === 1) html += `<th>Bully Pts</th>`;
+        if (STATE.currentGameIndex === 2) html += `<th>Race 180 Pts</th><th>Darts Used</th>`;
+        html += `</tr>`;
+
+        STATE.players.forEach((p, idx) => {
+            html += `<tr><td>${p.name}</td>`;
+            if (STATE.currentGameIndex === 0) html += `<td>${p.scores.coloring}</td>`;
+            if (STATE.currentGameIndex === 1) html += `<td>${p.scores.bully}</td>`;
+            if (STATE.currentGameIndex === 2) html += `<td>${STATE.racePlayerTotals[idx]}</td><td>${p.scores.raceDarts}</td>`;
+            html += `</tr>`;
+        });
+
+        table.innerHTML = html;
+    }
+
+    function renderFinalScoreboard() {
+        const table = document.getElementById('final-scoreboard');
+        
+        // Columns with player names horizontal
+        let html = `<thead><tr><th>Game / Metric</th>`;
+        STATE.players.forEach(p => {
+            html += `<th>${p.name}</th>`;
+        });
+        html += `</tr></thead><tbody>`;
+
+        // Game 1 Row
+        html += `<tr><td>1. Coloring Book (Pts)</td>`;
+        STATE.players.forEach(p => {
+            html += `<td>${p.scores.coloring}</td>`;
+        });
+        html += `</tr>`;
+
+        // Game 2 Row
+        html += `<tr><td>2. A Bit of Bully (Pts)</td>`;
+        STATE.players.forEach(p => {
+            html += `<td>${p.scores.bully}</td>`;
+        });
+        html += `</tr>`;
+
+        // Game 3 Row (Darts used used as score)
+        html += `<tr><td>3. Race to 180 (Darts Used)</td>`;
+        STATE.players.forEach(p => {
+            html += `<td>${p.scores.raceDarts}</td>`;
+        });
+        html += `</tr>`;
+
+        // Summary Total Row (Formula: Coloring Pts + Bully Pts - Race Darts or pure display)
+        // Note: Displays combined breakdown clearly at bottom.
+        html += `<tr class="total-row"><td>Total (Points / Darts)</td>`;
+        STATE.players.forEach(p => {
+            const totalPts = p.scores.coloring + p.scores.bully;
+            html += `<td>${totalPts} pts (${p.scores.raceDarts} darts)</td>`;
+        });
+        html += `</tr>`;
+
+        html += `</tbody>`;
+        table.innerHTML = html;
+    }
+</script>
+
+</body>
+</html>
