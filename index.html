@@ -345,7 +345,7 @@
     // State Management
     const STATE = {
         boardType: 'basic', // 'basic' | 'quad'
-        players: [], // [{ name: '', scores: { coloring: 0, bully: 0, raceDarts: 0 } }]
+        players: [], // [{ name: '', scores: { coloring: 0, bully: 0, raceDarts: 0, racePoints: 0 } }]
         currentGameIndex: 0, // 0: Coloring, 1: Bully, 2: Race to 180
         currentPlayerIndex: 0,
         currentRound: 1, // 1-3 for Coloring/Bully, unbounded for Race
@@ -356,7 +356,7 @@
         
         // Game Specifics
         coloringPlayerState: [], // Tracks unique colors hit in a round per player
-        racePlayerTotals: [] // Tracks current total score in Race to 180
+        racePlayerTotals: [] // Tracks current score in Race to 180 towards reaching 180 target
     };
 
     const GAMES = [
@@ -401,7 +401,7 @@
         STATE.boardType = document.getElementById('board-type').value;
         STATE.players = names.map(name => ({
             name,
-            scores: { coloring: 0, bully: 0, raceDarts: 0 }
+            scores: { coloring: 0, bully: 0, raceDarts: 0, racePoints: 0 }
         }));
         
         STATE.currentGameIndex = 0;
@@ -453,7 +453,7 @@
             document.getElementById('game-instructions').innerText = "Aim for the middle! The closer you are, the higher the points.";
             document.getElementById('display-player-score').innerText = `Total: ${player.scores.bully}`;
         } else {
-            document.getElementById('game-instructions').innerText = "Reach 180 points in as few darts as possible!";
+            document.getElementById('game-instructions').innerText = "Reach 180 points in as few darts as possible! (Score = 30 - Darts Thrown)";
             const currentPts = STATE.racePlayerTotals[STATE.currentPlayerIndex];
             const dartsUsed = player.scores.raceDarts;
             document.getElementById('display-player-score').innerText = `Pts: ${currentPts}/180 | Darts: ${dartsUsed}`;
@@ -598,7 +598,6 @@
         let modName = "";
         let modVal = STATE.activeModifier;
 
-        // Bull handling logic: Usually Bull is 25, DBull is 50. Modifiers apply directly to num.
         if (modVal === 1) modName = "";
         else if (modVal === 2) modName = "D";
         else if (modVal === 3) modName = "T";
@@ -620,7 +619,6 @@
             return;
         }
 
-        // Special handling for Race to 180 to stop adding if 180 reached mid-turn
         if (STATE.currentGameIndex === 2) {
             const currentPts = STATE.racePlayerTotals[STATE.currentPlayerIndex];
             const turnPtsSoFar = STATE.currentTurnDarts.reduce((a, b) => a + b.value, 0);
@@ -643,7 +641,6 @@
 
     function submitTurn() {
         if (STATE.currentTurnDarts.length < 3) {
-            // Check if player reached 180 early in Race to 180
             if (STATE.currentGameIndex === 2) {
                 const currentPts = STATE.racePlayerTotals[STATE.currentPlayerIndex];
                 const turnPts = STATE.currentTurnDarts.reduce((a, b) => a + b.value, 0);
@@ -670,7 +667,6 @@
                 }
             });
 
-            // Double points if 3 distinct colors hit in turn
             if (roundColors.size >= 3) {
                 turnScore *= 2;
             }
@@ -693,43 +689,34 @@
 
             STATE.racePlayerTotals[STATE.currentPlayerIndex] += turnScore;
             player.scores.raceDarts += dartsThrown;
+
+            // Calculate score using Fixed Maximum Penalty System (30-dart cap)
+            if (STATE.racePlayerTotals[STATE.currentPlayerIndex] >= 180) {
+                player.scores.racePoints = Math.max(0, 30 - player.scores.raceDarts);
+            }
         }
 
         // Reset turn state
         STATE.currentTurnDarts = [];
 
-        // Advance to next player/round/game
         advanceTurn();
     }
 
     function advanceTurn() {
         const numPlayers = STATE.players.length;
 
-        // Check if game is Race to 180 and if someone reached 180
-        if (STATE.currentGameIndex === 2) {
-            // Check if current player reached 180
-            if (STATE.racePlayerTotals[STATE.currentPlayerIndex] >= 180) {
-                // Check if all players have completed the round so everyone gets equal turns, 
-                // OR end immediately if everyone reached 180.
-            }
-        }
-
         STATE.currentPlayerIndex++;
 
         if (STATE.currentPlayerIndex >= numPlayers) {
-            // End of a full round for all players
             STATE.currentPlayerIndex = 0;
             STATE.currentRound++;
 
-            // Check Game End Conditions
             if (STATE.currentGameIndex < 2) {
-                // Round based games (3 rounds)
                 if (STATE.currentRound > GAMES[STATE.currentGameIndex].maxRounds) {
                     nextGame();
                     return;
                 }
             } else {
-                // Race to 180 logic: Check if all players reached >= 180
                 const allFinished = STATE.racePlayerTotals.every(pts => pts >= 180);
                 if (allFinished) {
                     endChallenge();
@@ -738,14 +725,11 @@
             }
         }
 
-        // Skip players in Race to 180 who already finished
         if (STATE.currentGameIndex === 2 && STATE.racePlayerTotals[STATE.currentPlayerIndex] >= 180) {
-            // Check if all finished
             if (STATE.racePlayerTotals.every(pts => pts >= 180)) {
                 endChallenge();
                 return;
             } else {
-                // Recursively move to next player
                 advanceTurn();
                 return;
             }
@@ -777,14 +761,17 @@
         let html = `<tr><th>Player</th>`;
         if (STATE.currentGameIndex === 0) html += `<th>Coloring Book Pts</th>`;
         if (STATE.currentGameIndex === 1) html += `<th>Bully Pts</th>`;
-        if (STATE.currentGameIndex === 2) html += `<th>Race 180 Pts</th><th>Darts Used</th>`;
+        if (STATE.currentGameIndex === 2) html += `<th>Race 180 Target</th><th>Darts Used</th><th>Race Pts (30 Cap)</th>`;
         html += `</tr>`;
 
         STATE.players.forEach((p, idx) => {
             html += `<tr><td>${p.name}</td>`;
             if (STATE.currentGameIndex === 0) html += `<td>${p.scores.coloring}</td>`;
             if (STATE.currentGameIndex === 1) html += `<td>${p.scores.bully}</td>`;
-            if (STATE.currentGameIndex === 2) html += `<td>${STATE.racePlayerTotals[idx]}</td><td>${p.scores.raceDarts}</td>`;
+            if (STATE.currentGameIndex === 2) {
+                const calculatedPoints = Math.max(0, 30 - p.scores.raceDarts);
+                html += `<td>${STATE.racePlayerTotals[idx]}/180</td><td>${p.scores.raceDarts}</td><td>${calculatedPoints}</td>`;
+            }
             html += `</tr>`;
         });
 
@@ -794,7 +781,6 @@
     function renderFinalScoreboard() {
         const table = document.getElementById('final-scoreboard');
         
-        // Columns with player names horizontal
         let html = `<thead><tr><th>Game / Metric</th>`;
         STATE.players.forEach(p => {
             html += `<th>${p.name}</th>`;
@@ -815,19 +801,18 @@
         });
         html += `</tr>`;
 
-        // Game 3 Row (Darts used used as score)
-        html += `<tr><td>3. Race to 180 (Darts Used)</td>`;
+        // Game 3 Row (Converted Points)
+        html += `<tr><td>3. Race to 180 Score (30 - Darts)</td>`;
         STATE.players.forEach(p => {
-            html += `<td>${p.scores.raceDarts}</td>`;
+            html += `<td>${p.scores.racePoints} pts (${p.scores.raceDarts} darts)</td>`;
         });
         html += `</tr>`;
 
-        // Summary Total Row (Formula: Coloring Pts + Bully Pts - Race Darts or pure display)
-        // Note: Displays combined breakdown clearly at bottom.
-        html += `<tr class="total-row"><td>Total (Points / Darts)</td>`;
+        // Summary Total Row (Sums all 3 point values directly)
+        html += `<tr class="total-row"><td>Total Score</td>`;
         STATE.players.forEach(p => {
-            const totalPts = p.scores.coloring + p.scores.bully;
-            html += `<td>${totalPts} pts (${p.scores.raceDarts} darts)</td>`;
+            const grandTotal = p.scores.coloring + p.scores.bully + p.scores.racePoints;
+            html += `<td>${grandTotal} pts</td>`;
         });
         html += `</tr>`;
 
