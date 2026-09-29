@@ -447,7 +447,7 @@
 
         // Display Score/Progress
         if (STATE.currentGameIndex === 0) {
-            document.getElementById('game-instructions').innerText = "Hit 3 different colors in a round to DOUBLE your turn points!";
+            document.getElementById('game-instructions').innerText = "Hit 3 different colors in a round to TRIPLE your turn points!";
             document.getElementById('display-player-score').innerText = `Total: ${player.scores.coloring}`;
         } else if (STATE.currentGameIndex === 1) {
             document.getElementById('game-instructions').innerText = "Aim for the middle! The closer you are, the higher the points.";
@@ -668,7 +668,7 @@
             });
 
             if (roundColors.size >= 3) {
-                turnScore *= 2;
+                turnScore *= 3;
             }
 
             player.scores.coloring += turnScore;
