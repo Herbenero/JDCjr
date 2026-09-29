@@ -692,7 +692,7 @@
 
             // Calculate score using Fixed Maximum Penalty System (30-dart cap)
             if (STATE.racePlayerTotals[STATE.currentPlayerIndex] >= 180) {
-                player.scores.racePoints = Math.max(0, 30 - player.scores.raceDarts)*2);
+                player.scores.racePoints = Math.max(0, 30 - player.scores.raceDarts) * 2);
             }
         }
 
@@ -769,7 +769,7 @@
             if (STATE.currentGameIndex === 0) html += `<td>${p.scores.coloring}</td>`;
             if (STATE.currentGameIndex === 1) html += `<td>${p.scores.bully}</td>`;
             if (STATE.currentGameIndex === 2) {
-                const calculatedPoints = Math.max(0, 30 - p.scores.raceDarts);
+                const calculatedPoints = Math.max(0, (30 - p.scores.raceDarts) * 2);
                 html += `<td>${STATE.racePlayerTotals[idx]}/180</td><td>${p.scores.raceDarts}</td><td>${calculatedPoints}</td>`;
             }
             html += `</tr>`;
