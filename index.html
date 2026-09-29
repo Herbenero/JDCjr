@@ -692,7 +692,7 @@
 
             // Calculate score using Fixed Maximum Penalty System (30-dart cap)
             if (STATE.racePlayerTotals[STATE.currentPlayerIndex] >= 180) {
-                player.scores.racePoints = Math.max(0, 30 - player.scores.raceDarts);
+                player.scores.racePoints = Math.max(0, 30 - player.scores.raceDarts)*2);
             }
         }
 
