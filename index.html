@@ -418,7 +418,7 @@
 
             // Display Score/Progress
             if (STATE.currentGameIndex === 0) {
-                document.getElementById('game-instructions').innerText = "Hit 3 different colors in a round to TRIPLE your turn points!";
+                document.getElementById('game-instructions').innerText = "Hit 3 different colors to TRIPLE your turn points, or hit 3 Red/Green to DOUBLE!";
                 document.getElementById('display-player-score').innerText = `Total: ${player.scores.coloring}`;
             } else if (STATE.currentGameIndex === 1) {
                 document.getElementById('game-instructions').innerText = "Aim for the middle! The closer you are, the higher the points.";
@@ -634,15 +634,24 @@
                 // Coloring Book
                 let turnScore = 0;
                 let roundColors = new Set();
+                let colorCounts = {};
+
                 STATE.currentTurnDarts.forEach(d => {
                     turnScore += d.value;
                     if (d.color && d.color !== 'miss') {
                         roundColors.add(d.color);
+                        colorCounts[d.color] = (colorCounts[d.color] || 0) + 1;
                     }
                 });
+
                 if (roundColors.size >= 3) {
+                    // 3 different colors -> TRIPLE
                     turnScore *= 3;
+                } else if (colorCounts['red'] === 3 || colorCounts['green'] === 3) {
+                    // 3 red OR 3 green -> DOUBLE
+                    turnScore *= 2;
                 }
+
                 player.scores.coloring += turnScore;
 
             } else if (STATE.currentGameIndex === 1) {
